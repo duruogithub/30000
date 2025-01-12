@@ -49,6 +49,8 @@ feature_label_mapping = {
 # Home page route
 @app.route("/", methods=["GET", "POST"])
 def index():
+    shap_plot_path = None
+
     if request.method == "POST":
         # Collect feature values from the form
         feature_values = []
@@ -88,6 +90,7 @@ def index():
 
     return render_template("index.html", feature_ranges=feature_ranges, feature_columns=feature_columns)
 
+
 # Function to generate SHAP plot
 def generate_shap_plot(model, features):
     explainer = shap.TreeExplainer(model)
@@ -105,13 +108,15 @@ def generate_shap_plot(model, features):
         matplotlib=True,
     )
 
-    # Use tempfile for storing the plot
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmpfile:
-        shap_plot_path = tmpfile.name
-        plt.savefig(shap_plot_path)
-        plt.clf()  # Clear the figure after saving
+    # Define the static directory for saving the plot
+    static_dir = os.path.join(app.root_path, 'static', 'plots')
+    os.makedirs(static_dir, exist_ok=True)
 
-    return shap_plot_path
+    shap_plot_path = os.path.join(static_dir, 'shap_plot.png')
+    plt.savefig(shap_plot_path)
+    plt.clf()  # Clear the figure after saving
+
+    return f"/static/plots/shap_plot.png"
 
 
 # Function to replace feature labels for SHAP plot
@@ -124,7 +129,7 @@ def replace_feature_labels(features):
 @app.route('/shap_plot')
 def serve_shap_plot():
     # Serve the SHAP plot from the generated path
-    shap_plot_path = os.path.join(os.getcwd(), 'shap_plots', 'shap_plot.png')
+    shap_plot_path = os.path.join(os.getcwd(), 'static', 'plots', 'shap_plot.png')
     return send_file(shap_plot_path, mimetype="image/png")
 
 

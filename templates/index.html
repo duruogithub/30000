@@ -157,15 +157,15 @@
     </form>
 
     <!-- Display Results -->
-    {% if probability %}
+    {% if probability is not none %}
         <div class="result">
             <h2>Prediction Results:</h2>
-            <p><strong>Predicted Probability:</strong> {{ probability }}</p>
+            <p><strong>Predicted Probability:</strong> {{ probability | round(2) }}</p>
             <p><strong>Risk Level:</strong> {{ risk_level }}</p>
 
             {% if shap_plot_path %}
                 <h3>SHAP Plot:</h3>
-                <img src="{{ url_for('serve_shap_plot') }}" alt="SHAP Plot showing feature importance">
+                <img src="{{ shap_plot_path }}" alt="SHAP Plot showing feature importance">
             {% endif %}
         </div>
     {% endif %}
