@@ -4,8 +4,7 @@ import pandas as pd
 import shap
 import matplotlib
 import matplotlib.pyplot as plt
-import tempfile
-from flask import Flask, render_template, request, send_file
+from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 
 # 使用非交互模式，避免启动 Matplotlib GUI
@@ -47,17 +46,19 @@ feature_label_mapping = {
 }
 
 # Home page route
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET"])
 def index():
-    shap_plot_path = None
+    return render_template("index.html", feature_ranges=feature_ranges, feature_columns=feature_columns)
 
-    if request.method == "POST":
+
+# API route for prediction
+@app.route("/predict", methods=["POST"])
+def predict():
+    try:
         # Collect feature values from the form
         feature_values = []
         for feature in feature_columns:
-            value = request.form.get(feature)
-            if value is None:
-                value = 0  # Use default value if no selection
+            value = request.json.get(feature, 0)  # Use default value if not provided
             feature_values.append(int(value))
 
         # Convert to DataFrame
@@ -75,20 +76,17 @@ def index():
         risk_level = "High Risk" if probability > THRESHOLD else "Low Risk"
 
         # Generate SHAP plot
-        try:
-            shap_plot_path = generate_shap_plot(best_model, features)
-        except Exception as e:
-            shap_plot_path = None
-            print(f"SHAP plot generation failed: {e}")
+        shap_plot_path = generate_shap_plot(best_model, features)
 
-        return render_template("index.html", 
-                               probability=probability,
-                               risk_level=risk_level,
-                               shap_plot_path=shap_plot_path,
-                               feature_ranges=feature_ranges,
-                               feature_columns=feature_columns)
+        # Return response
+        return jsonify({
+            "probability": round(probability, 2),
+            "risk_level": risk_level,
+            "shap_plot_path": shap_plot_path
+        })
 
-    return render_template("index.html", feature_ranges=feature_ranges, feature_columns=feature_columns)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # Function to generate SHAP plot
@@ -123,14 +121,6 @@ def generate_shap_plot(model, features):
 def replace_feature_labels(features):
     renamed_features = features.rename(columns=feature_label_mapping)
     return renamed_features
-
-
-# Route to serve SHAP plot image
-@app.route('/shap_plot')
-def serve_shap_plot():
-    # Serve the SHAP plot from the generated path
-    shap_plot_path = os.path.join(os.getcwd(), 'static', 'plots', 'shap_plot.png')
-    return send_file(shap_plot_path, mimetype="image/png")
 
 
 if __name__ == "__main__":

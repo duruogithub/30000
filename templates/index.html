@@ -80,94 +80,62 @@
     <h1>Prediction Model</h1>
 
     <!-- Form to collect input -->
-    <form method="POST">
-        <label for="Gender">Gender</label>
-        <select name="Gender" id="Gender" required>
-            <option value="" disabled selected>Select Gender</option>
-            <option value="0">0</option>
-            <option value="1">1</option>
-        </select>
-
-        <label for="Age">Age</label>
-        <select name="Age" id="Age" required>
-            <option value="" disabled selected>Select Age</option>
-            <option value="0">0</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-        </select>
-
-        <label for="Residence">Residence</label>
-        <select name="Residence" id="Residence" required>
-            <option value="" disabled selected>Select Residence</option>
-            <option value="0">0</option>
-            <option value="1">1</option>
-        </select>
-
-        <label for="BMI">BMI</label>
-        <select name="BMI" id="BMI" required>
-            <option value="" disabled selected>Select BMI</option>
-            <option value="0">0</option>
-            <option value="1">1</option>
-        </select>
-
-        <label for="smoke">Smoke</label>
-        <select name="smoke" id="smoke" required>
-            <option value="" disabled selected>Select Smoke</option>
-            <option value="0">0</option>
-            <option value="1">1</option>
-        </select>
-
-        <label for="drink">Drink</label>
-        <select name="drink" id="drink" required>
-            <option value="" disabled selected>Select Drink</option>
-            <option value="0">0</option>
-            <option value="1">1</option>
-        </select>
-
-        <label for="FX">History of Chronic Diarrhea (FX)</label>
-        <select name="FX" id="FX" required>
-            <option value="" disabled selected>Select FX</option>
-            <option value="0">0</option>
-            <option value="1">1</option>
-        </select>
-
-        <label for="BM">History of Chronic Constipation (BM)</label>
-        <select name="BM" id="BM" required>
-            <option value="" disabled selected>Select BM</option>
-            <option value="0">0</option>
-            <option value="1">1</option>
-        </select>
-
-        <label for="LWY">History of Appendicitis or Appendectomy (LWY)</label>
-        <select name="LWY" id="LWY" required>
-            <option value="" disabled selected>Select LWY</option>
-            <option value="0">0</option>
-            <option value="1">1</option>
-        </select>
-
-        <label for="FIT">FIT</label>
-        <select name="FIT" id="FIT" required>
-            <option value="" disabled selected>Select FIT</option>
-            <option value="0">0</option>
-            <option value="1">1</option>
-        </select>
-
-        <button type="submit">Predict</button>
+    <form id="predict-form">
+        {% for feature, info in feature_ranges.items() %}
+            <label for="{{ feature }}">{{ info.get('label', feature) }}</label>
+            <select id="{{ feature }}" name="{{ feature }}" required>
+                <option value="" disabled selected>Select {{ feature }}</option>
+                {% for option in info["options"] %}
+                    <option value="{{ option }}">{{ option }}</option>
+                {% endfor %}
+            </select>
+        {% endfor %}
+        <button type="button" id="predict-button">Predict</button>
     </form>
 
     <!-- Display Results -->
-    {% if probability is not none %}
-        <div class="result">
-            <h2>Prediction Results:</h2>
-            <p><strong>Predicted Probability:</strong> {{ probability | round(2) }}</p>
-            <p><strong>Risk Level:</strong> {{ risk_level }}</p>
-
-            {% if shap_plot_path %}
-                <h3>SHAP Plot:</h3>
-                <img src="{{ shap_plot_path }}" alt="SHAP Plot showing feature importance">
-            {% endif %}
+    <div class="result" id="result-container" style="display: none;">
+        <h2>Prediction Results:</h2>
+        <p id="probability">Predicted Probability: --</p>
+        <p id="risk-level">Risk Level: --</p>
+        <div id="shap-container" style="display: none;">
+            <h3>SHAP Plot:</h3>
+            <img id="shap-plot" src="" alt="SHAP Plot showing feature importance">
         </div>
-    {% endif %}
+    </div>
+
+    <script>
+        document.getElementById("predict-button").addEventListener("click", function() {
+            const formData = {};
+            {% for feature in feature_columns %}
+                formData["{{ feature }}"] = document.getElementById("{{ feature }}").value;
+            {% endfor %}
+
+            fetch("/predict", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("result-container").style.display = "block";
+                document.getElementById("probability").innerText = `Predicted Probability: ${data.probability}`;
+                document.getElementById("risk-level").innerText = `Risk Level: ${data.risk_level}`;
+                
+                if (data.shap_plot_path) {
+                    document.getElementById("shap-container").style.display = "block";
+                    document.getElementById("shap-plot").src = data.shap_plot_path;
+                } else {
+                    document.getElementById("shap-container").style.display = "none";
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("An error occurred while processing your request.");
+            });
+        });
+    </script>
 </body>
 </html>
