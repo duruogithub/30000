@@ -71,17 +71,80 @@
 <body>
     <h1>Prediction Model</h1>
 
-    <!-- 表单提交 -->
+    <!-- Static HTML Form -->
     <form method="POST">
-        {% for feature in feature_columns %}
-            <label for="{{ feature }}">{{ feature }}</label>
-            <select name="{{ feature }}" id="{{ feature }}" required>
-                <option value="" disabled selected>Select {{ feature }}</option>
-                {% for option in feature_ranges[feature]["options"] %}
-                    <option value="{{ option }}">{{ option }}</option>
-                {% endfor %}
-            </select><br>
-        {% endfor %}
+        <label for="Gender">Gender</label>
+        <select name="Gender" id="Gender" required>
+            <option value="" disabled selected>Select Gender</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+        </select>
+
+        <label for="Age">Age</label>
+        <select name="Age" id="Age" required>
+            <option value="" disabled selected>Select Age</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+        </select>
+
+        <label for="Residence">Residence</label>
+        <select name="Residence" id="Residence" required>
+            <option value="" disabled selected>Select Residence</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+        </select>
+
+        <label for="BMI">BMI</label>
+        <select name="BMI" id="BMI" required>
+            <option value="" disabled selected>Select BMI</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+        </select>
+
+        <label for="smoke">Smoke</label>
+        <select name="smoke" id="smoke" required>
+            <option value="" disabled selected>Select Smoke</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+        </select>
+
+        <label for="drink">Drink</label>
+        <select name="drink" id="drink" required>
+            <option value="" disabled selected>Select Drink</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+        </select>
+
+        <label for="FX">History of Chronic Diarrhea (FX)</label>
+        <select name="FX" id="FX" required>
+            <option value="" disabled selected>Select FX</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+        </select>
+
+        <label for="BM">History of Chronic Constipation (BM)</label>
+        <select name="BM" id="BM" required>
+            <option value="" disabled selected>Select BM</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+        </select>
+
+        <label for="LWY">History of Appendicitis or Appendectomy (LWY)</label>
+        <select name="LWY" id="LWY" required>
+            <option value="" disabled selected>Select LWY</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+        </select>
+
+        <label for="FIT">FIT</label>
+        <select name="FIT" id="FIT" required>
+            <option value="" disabled selected>Select FIT</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+        </select>
+
         <button type="submit">Predict</button>
     </form>
 
