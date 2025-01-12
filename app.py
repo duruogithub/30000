@@ -88,7 +88,6 @@ def index():
 
     return render_template("index.html", feature_ranges=feature_ranges, feature_columns=feature_columns)
 
-
 # Function to generate SHAP plot
 def generate_shap_plot(model, features):
     explainer = shap.TreeExplainer(model)

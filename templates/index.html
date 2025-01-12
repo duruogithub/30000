@@ -59,6 +59,10 @@
             margin-top: 30px;
             text-align: center;
             font-size: 18px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         img {
@@ -66,12 +70,16 @@
             margin: 20px auto;
             max-width: 100%;
         }
+
+        .result p {
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
     <h1>Prediction Model</h1>
 
-    <!-- Static HTML Form -->
+    <!-- Form to collect input -->
     <form method="POST">
         <label for="Gender">Gender</label>
         <select name="Gender" id="Gender" required>
@@ -148,6 +156,7 @@
         <button type="submit">Predict</button>
     </form>
 
+    <!-- Display Results -->
     {% if probability %}
         <div class="result">
             <h2>Prediction Results:</h2>
