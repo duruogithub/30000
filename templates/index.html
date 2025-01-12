@@ -4,6 +4,69 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prediction Model</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7fa;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .result {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        img {
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
+        }
+    </style>
 </head>
 <body>
     <h1>Prediction Model</h1>
@@ -13,6 +76,7 @@
         {% for feature in feature_columns %}
             <label for="{{ feature }}">{{ feature }}</label>
             <select name="{{ feature }}" id="{{ feature }}" required>
+                <option value="" disabled selected>Select {{ feature }}</option>
                 {% for option in feature_ranges[feature]["options"] %}
                     <option value="{{ option }}">{{ option }}</option>
                 {% endfor %}
@@ -22,14 +86,16 @@
     </form>
 
     {% if probability %}
-        <h2>Prediction Results:</h2>
-        <p>Predicted Probability: {{ probability }}</p>
-        <p>Risk Level: {{ risk_level }}</p>
+        <div class="result">
+            <h2>Prediction Results:</h2>
+            <p><strong>Predicted Probability:</strong> {{ probability }}</p>
+            <p><strong>Risk Level:</strong> {{ risk_level }}</p>
 
-        {% if shap_plot_path %}
-            <h3>SHAP Plot:</h3>
-            <img src="{{ url_for('serve_shap_plot') }}" alt="SHAP Plot">
-        {% endif %}
+            {% if shap_plot_path %}
+                <h3>SHAP Plot:</h3>
+                <img src="{{ url_for('serve_shap_plot') }}" alt="SHAP Plot showing feature importance">
+            {% endif %}
+        </div>
     {% endif %}
 </body>
 </html>

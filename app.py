@@ -4,6 +4,7 @@ import pandas as pd
 import shap
 import matplotlib
 import matplotlib.pyplot as plt
+import tempfile
 from flask import Flask, render_template, request, send_file
 from dotenv import load_dotenv
 
@@ -18,7 +19,7 @@ load_dotenv()
 THRESHOLD = float(os.getenv("THRESHOLD", 0.14))
 
 # Load model
-model_save_path = r"rf_model.pkl"
+model_save_path = os.path.join(os.getcwd(), "rf_model.pkl")
 model = joblib.load(model_save_path)
 
 # Feature columns and ranges (same as Streamlit version)
@@ -105,14 +106,11 @@ def generate_shap_plot(model, features):
         matplotlib=True,
     )
 
-    # Create a directory to store the SHAP plots
-    output_dir = os.path.join(os.getcwd(), 'shap_plots')
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Save the plot as an image to be shown on the webpage
-    shap_plot_path = os.path.join(output_dir, 'shap_plot.png')
-    plt.savefig(shap_plot_path)  # Save to shap_plots directory
-    plt.clf()  # Clear the current figure
+    # Use tempfile for storing the plot
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmpfile:
+        shap_plot_path = tmpfile.name
+        plt.savefig(shap_plot_path)
+        plt.clf()  # Clear the figure after saving
 
     return shap_plot_path
 
@@ -132,4 +130,4 @@ def serve_shap_plot():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)  # Set debug=False for production environment
