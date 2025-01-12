@@ -3,193 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ACN Risk Prediction</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        select, button {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-        }
-
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .language-buttons {
-            text-align: right;
-            margin-bottom: 20px;
-        }
-
-        .language-buttons button {
-            margin-left: 10px;
-        }
-    </style>
+    <title>Prediction Model</title>
 </head>
 <body>
-    <div class="container">
-        <div class="language-buttons">
-            <button id="lang-en">English</button>
-            <button id="lang-cn">中文</button>
-        </div>
-        <h1 id="title">ACN Risk Prediction</h1>
-        <form action="/predict" method="POST">
-            <div class="form-group">
-                <label id="label-gender" for="gender">Gender:</label>
-                <select id="gender" name="gender" required>
-                    <option value="" disabled selected>--请选择--</option>
-                    <option value="0">Female</option>
-                    <option value="1">Male</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label id="label-age" for="age">Age:</label>
-                <select id="age" name="age" required>
-                    <option value="" disabled selected>--请选择--</option>
-                    <option value="0">40–49</option>
-                    <option value="1">50–59</option>
-                    <option value="2">60–69</option>
-                    <option value="3">70–74</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label id="label-bmi" for="bmi">BMI:</label>
-                <select id="bmi" name="bmi" required>
-                    <option value="" disabled selected>--请选择--</option>
-                    <option value="0">Less than 24</option>
-                    <option value="1">24 or greater</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label id="label-residence" for="residence">Residence:</label>
-                <select id="residence" name="residence" required>
-                    <option value="" disabled selected>--请选择--</option>
-                    <option value="0">Central urban</option>
-                    <option value="1">Agriculture-related areas</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label id="label-fx" for="fx">History of chronic diarrhea:</label>
-                <select id="fx" name="fx" required>
-                    <option value="" disabled selected>--请选择--</option>
-                    <option value="0">No</option>
-                    <option value="1">Yes</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label id="label-bm" for="bm">History of chronic constipation:</label>
-                <select id="bm" name="bm" required>
-                    <option value="" disabled selected>--请选择--</option>
-                    <option value="0">No</option>
-                    <option value="1">Yes</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label id="label-lwy" for="lwy">History of chronic appendicitis or appendectomy:</label>
-                <select id="lwy" name="lwy" required>
-                    <option value="" disabled selected>--请选择--</option>
-                    <option value="0">No</option>
-                    <option value="1">Yes</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label id="label-smoke" for="smoke">Smoking status:</label>
-                <select id="smoke" name="smoke" required>
-                    <option value="" disabled selected>--请选择--</option>
-                    <option value="0">Never smokers</option>
-                    <option value="1">Current or former smokers</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label id="label-drink" for="drink">Alcohol consumption:</label>
-                <select id="drink" name="drink" required>
-                    <option value="" disabled selected>--请选择--</option>
-                    <option value="0">Never drinkers</option>
-                    <option value="1">Drinkers</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label id="label-fit" for="fit">FIT Test Result:</label>
-                <select id="fit" name="fit" required>
-                    <option value="" disabled selected>--请选择--</option>
-                    <option value="0">Negative</option>
-                    <option value="1">Positive</option>
-                </select>
-            </div>
-            <button type="submit" id="submit-button">Submit</button>
-        </form>
-    </div>
-    <script>
-        const translations = {
-            en: {
-                title: "ACN Risk Prediction",
-                gender: "Gender:",
-                age: "Age:",
-                bmi: "BMI:",
-                residence: "Residence:",
-                fx: "History of chronic diarrhea:",
-                bm: "History of chronic constipation:",
-                lwy: "History of chronic appendicitis or appendectomy:",
-                smoke: "Smoking status:",
-                drink: "Alcohol consumption:",
-                fit: "FIT Test Result:",
-                submit: "Submit",
-                options: "--Please Select--"
-            },
-            cn: {
-                title: "ACN风险预测",
-                gender: "性别:",
-                age: "年龄:",
-                bmi: "BMI:",
-                residence: "居住地:",
-                fx: "慢性腹泻史:",
-                bm: "慢性便秘史:",
-                lwy: "慢性阑尾炎或阑尾切除史:",
-                smoke: "吸烟状况:",
-                drink: "饮酒状况:",
-                fit: "FIT测试结果:",
-                submit: "提交",
-                options: "--请选择--"
-            }
-        };
+    <h1>Prediction Model</h1>
 
-        const languageButtons = document.querySelectorAll("#lang-en, #lang-cn");
-        const elementsToTranslate = [
-            { id: "title", key: "title" },
-            { id: "label-gender", key: "gender" },
-            { id: "label-age", key: "age" },
-            { id: "label-bmi", key: "bmi" },
-            { id: "label-residence", key: "residence" },
-            { id: "label-fx", key: "fx" },
-            { id: "label-bm", key: "bm" },
-            { id: "label-lwy", key: "lwy" },
-            { id: "label-smoke", key: "smoke" },
-            { id: "label-drink", key: "drink" },
-            { id: "label-fit", key: "fit" },
-            { id: "submit-button", key: "submit" }
-        ];
+    <!-- 表单提交 -->
+    <form method="POST">
+        {% for feature in feature_columns %}
+            <label for="{{ feature }}">{{ feature }}</label>
+            <select name="{{ feature }}" id="{{ feature }}" required>
+                {% for option in feature_ranges[feature]["options"] %}
+                    <option value="{{ option }}">{{ option }}</option>
+                {% endfor %}
+            </select><br>
+        {% endfor %}
+        <button type="submit">Predict</button>
+    </form>
 
-        languageButtons.forEach(button => {
-            button.addEventListener("click", () => {
-                const lang = button.id.split("-")[1];
-                elementsToTranslate.forEach(item => {
-                    document.getElementById(item.id).textContent = translations[lang][item.key];
-                });
-                document.querySelectorAll("select option:first-child").forEach(option => {
-                    option.textContent = translations[lang]["options"];
-                });
-            });
-        });
-    </script>
+    {% if probability %}
+        <h2>Prediction Results:</h2>
+        <p>Predicted Probability: {{ probability }}</p>
+        <p>Risk Level: {{ risk_level }}</p>
+
+        {% if shap_plot %}
+            <h3>SHAP Plot:</h3>
+            <img src="{{ shap_plot }}" alt="SHAP Plot">
+        {% endif %}
+    {% endif %}
 </body>
-</html> 
+</html>

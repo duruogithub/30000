@@ -1,0 +1,30 @@
+.container {
+    width: 50%;
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+}
+form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+form select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+}
+form button {
+    background-color: #007BFF;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+form button:hover {
+    background-color: #0056b3;
+}
+small {
+    color: red;
+    font-size: 12px;
+}

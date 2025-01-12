@@ -1,133 +1,123 @@
-from flask import Flask, render_template, request, jsonify
-import joblib
-import numpy as np
 import os
-import logging
+import joblib
+import pandas as pd
+import shap
+import matplotlib
+import matplotlib.pyplot as plt
+from flask import Flask, render_template, request
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
-
-# Configure logging
-log_level = os.getenv("LOG_LEVEL", "INFO").upper()
-logging.basicConfig(level=getattr(logging, log_level, logging.INFO))
-logger = logging.getLogger(__name__)
+# 使用非交互模式，避免启动 Matplotlib GUI
+matplotlib.use('Agg')
 
 # Initialize Flask app
 app = Flask(__name__)
 
-# App configuration
-app.config["THRESHOLD"] = float(os.getenv("THRESHOLD", 0.136868298))
-app.config["MODEL_PATH"] = os.getenv("MODEL_PATH", os.path.join(os.path.dirname(__file__), "rf_model.pkl"))
-
-# Validate model path
-if not os.path.exists(app.config["MODEL_PATH"]):
-    raise FileNotFoundError(f"Model file not found: {app.config['MODEL_PATH']}")
+# Load environment variables
+load_dotenv()
+THRESHOLD = float(os.getenv("THRESHOLD", 0.14))
 
 # Load model
-try:
-    logger.info(f"Loading model file: {app.config['MODEL_PATH']}")
-    model = joblib.load(app.config["MODEL_PATH"])
-    if not hasattr(model, "predict"):
-        raise ValueError("Loaded model is invalid. Please verify the model file!")
-except Exception as e:
-    logger.error(f"Error loading model: {e}")
-    raise RuntimeError(f"Unable to load model: {e}")
+model_save_path = r"rf_model.pkl"
+model = joblib.load(model_save_path)
 
-@app.route("/")
+# Feature columns and ranges (same as Streamlit version)
+feature_columns = [
+    "Gender", "Age", "Residence", "BMI", "smoke", "drink", "FX", "BM", "LWY", "FIT"
+]
+
+feature_ranges = {
+    "Gender": {"type": "categorical", "options": [0, 1]},
+    "Age": {"type": "categorical", "options": [0, 1, 2, 3]},
+    "Residence": {"type": "categorical", "options": [0, 1]},
+    "BMI": {"type": "categorical", "options": [0, 1]},
+    "smoke": {"type": "categorical", "options": [0, 1]},
+    "drink": {"type": "categorical", "options": [0, 1]},
+    "FX": {"type": "categorical", "options": [0, 1], "label": "History of chronic diarrhea"},
+    "BM": {"type": "categorical", "options": [0, 1], "label": "History of chronic constipation"},
+    "LWY": {"type": "categorical", "options": [0, 1], "label": "History of chronic appendicitis or appendectomy"},
+    "FIT": {"type": "categorical", "options": [0, 1]},
+}
+
+feature_label_mapping = {
+    "FX": "Chronic diarrhea",
+    "BM": "Chronic constipation",
+    "LWY": "Appendicitis",
+}
+
+# Home page route
+@app.route("/", methods=["GET", "POST"])
 def index():
-    """Render home page"""
-    try:
-        return render_template("index.html")
-    except Exception as e:
-        logger.error(f"Template rendering error: {e}")
-        return f"Template rendering error: {e}", 500
+    if request.method == "POST":
+        # Collect feature values from the form
+        feature_values = []
+        for feature in feature_columns:
+            value = request.form.get(feature)
+            if value is None:
+                value = 0  # Use default value if no selection
+            feature_values.append(int(value))
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    """Handle prediction request"""
-    try:
-        # Extract and validate input data
-        input_data = validate_input(request.form)
+        # Convert to DataFrame
+        features = pd.DataFrame([feature_values], columns=feature_columns)
 
-        # Perform prediction
-        prediction = make_prediction(input_data)
-
-        # Render visualization page and pass prediction results
-        return render_template("visualization.html", prediction=prediction)
-    except ValueError as ve:
-        logger.warning(f"Input validation failed: {ve}")
-        return jsonify({"error": "Invalid input data", "details": str(ve)}), 400
-    except Exception as e:
-        logger.error(f"Prediction processing failed: {e}")
-        return jsonify({"error": "Server error", "details": str(e)}), 500
-
-@app.route("/visualization")
-def visualization():
-    """Render risk visualization page"""
-    try:
-        return render_template("visualization.html")
-    except Exception as e:
-        logger.error(f"Visualization page rendering error: {e}")
-        return f"Visualization page rendering error: {e}", 500
-
-def validate_input(form):
-    """Validate and parse input data"""
-    try:
-        gender = int(form.get("gender", 0))
-        age = int(form.get("age", 0))
-        bmi = float(form.get("bmi", 0.0))
-        residence = int(form.get("residence", 0))
-        fx = int(form.get("fx", 0))
-        bm = int(form.get("bm", 0))
-        lwy = int(form.get("lwy", 0))
-        smoke = int(form.get("smoke", 0))
-        drink = int(form.get("drink", 0))
-        fit = int(form.get("fit", 0))
-
-        # Check if values are within expected range
-        if not (0 <= gender <= 1):
-            raise ValueError("Gender value must be 0 or 1")
-        if not (0 <= age <= 3):
-            raise ValueError("Age value must be between 0-3")
-        if not (0.0 <= bmi <= 50.0):
-            raise ValueError("BMI value must be between 0.0-50.0")
-        if not (0 <= residence <= 1):
-            raise ValueError("Residence value must be 0 or 1")
-        if not all(0 <= v <= 1 for v in [fx, bm, lwy, smoke, drink, fit]):
-            raise ValueError("Binary input values must be 0 or 1")
-
-        return np.array([[gender, age, bmi, residence, fx, bm, lwy, smoke, drink, fit]])
-    except ValueError as e:
-        raise ValueError(f"Input data validation failed: {e}")
-
-def make_prediction(input_data):
-    """Make predictions using the model and generate results"""
-    try:
-        if hasattr(model, "predict_proba"):
-            probability = model.predict_proba(input_data)[0, 1]
-            risk = probability * 100
-            if probability > app.config["THRESHOLD"]:
-                level, recommendation = "High Risk", "High risk! Immediate colonoscopy is recommended."
-            else:
-                level, recommendation = "Low Risk", "Low risk. Observation and regular follow-ups are recommended."
+        # Predict the class
+        if hasattr(model, 'best_estimator_'):
+            best_model = model.best_estimator_
         else:
-            prediction = model.predict(input_data)
-            risk = prediction[0] * 100
-            level, recommendation = "Unknown Risk", "The model does not support probability prediction. Please check the model type."
+            best_model = model
 
-        return {
-            "risk": round(risk, 2),
-            "level": level,
-            "recommendation": recommendation,
-            "input_data": input_data.tolist(),
-            "threshold": app.config["THRESHOLD"]
-        }
-    except Exception as e:
-        raise RuntimeError(f"Prediction failed: {e}")
+        predicted_class = best_model.predict(features)[0]
+        predicted_proba = best_model.predict_proba(features)[0]
+        probability = predicted_proba[1]
+        risk_level = "High Risk" if probability > THRESHOLD else "Low Risk"
+
+        # Generate SHAP plot
+        try:
+            shap_plot = generate_shap_plot(best_model, features)
+        except Exception as e:
+            shap_plot = None
+            print(f"SHAP plot generation failed: {e}")
+
+        return render_template("index.html", 
+                               probability=probability,
+                               risk_level=risk_level,
+                               shap_plot=shap_plot,
+                               feature_ranges=feature_ranges,
+                               feature_columns=feature_columns)
+
+    return render_template("index.html", feature_ranges=feature_ranges, feature_columns=feature_columns)
+
+
+# Function to generate SHAP plot
+def generate_shap_plot(model, features):
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(features)
+
+    # Replace feature labels
+    features_with_labels = replace_feature_labels(features)
+
+    # Generate SHAP force plot
+    plt.figure(figsize=(15, 6))  # Set figure size
+    shap.force_plot(
+        explainer.expected_value[1],
+        shap_values[1],
+        features_with_labels,
+        matplotlib=True,
+    )
+
+    # Save the plot as an image to be shown on the webpage
+    shap_plot_path = "static/shap_plot.png"
+    plt.savefig(shap_plot_path)  # Save to static folder
+    plt.clf()  # Clear the current figure
+
+    return shap_plot_path
+
+
+# Function to replace feature labels for SHAP plot
+def replace_feature_labels(features):
+    renamed_features = features.rename(columns=feature_label_mapping)
+    return renamed_features
+
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))
-    app_debug = os.getenv("APP_DEBUG", "false").lower() == "true"
-    logger.info(f"App is running on port {port}, debug mode: {app_debug}")
-    app.run(host="0.0.0.0", port=port, debug=app_debug, threaded=True)
+    app.run(debug=True)
