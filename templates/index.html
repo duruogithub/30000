@@ -32,23 +32,30 @@
             font-weight: bold;
         }
 
+        .field-group {
+            margin-bottom: 15px;
+        }
+
         select {
             width: 100%;
             padding: 10px;
-            margin-bottom: 15px;
             border: 1px solid #ccc;
             border-radius: 5px;
+            background-color: #f9f9f9;
+            font-size: 14px;
         }
 
         button {
             background-color: #4CAF50;
             color: white;
-            padding: 10px 20px;
+            padding: 12px 20px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             width: 100%;
             font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
         }
 
         button:hover {
@@ -74,26 +81,35 @@
         .result p {
             margin: 10px 0;
         }
+
+        .instructions {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
     <h1>Prediction Model</h1>
+    <p class="instructions">请选择每个变量的值，然后点击“Predict”按钮进行预测。</p>
 
-    <!-- Form to collect input -->
+    <!-- 表单展示所有变量 -->
     <form id="predict-form">
         {% for feature, info in feature_ranges.items() %}
-            <label for="{{ feature }}">{{ info.get('label', feature) }}</label>
-            <select id="{{ feature }}" name="{{ feature }}" required>
-                <option value="" disabled selected>Select {{ feature }}</option>
-                {% for option in info["options"] %}
-                    <option value="{{ option }}">{{ option }}</option>
-                {% endfor %}
-            </select>
+            <div class="field-group">
+                <label for="{{ feature }}">{{ info.get('label', feature) }}:</label>
+                <select id="{{ feature }}" name="{{ feature }}" required>
+                    {% for option in info["options"] %}
+                        <option value="{{ option }}">{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </div>
         {% endfor %}
         <button type="button" id="predict-button">Predict</button>
     </form>
 
-    <!-- Display Results -->
+    <!-- 结果展示 -->
     <div class="result" id="result-container" style="display: none;">
         <h2>Prediction Results:</h2>
         <p id="probability">Predicted Probability: --</p>
