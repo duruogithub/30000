@@ -4,7 +4,7 @@ import pandas as pd
 import shap
 import matplotlib
 import matplotlib.pyplot as plt
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
 from dotenv import load_dotenv
 
 # 使用非交互模式，避免启动 Matplotlib GUI
@@ -73,15 +73,15 @@ def index():
 
         # Generate SHAP plot
         try:
-            shap_plot = generate_shap_plot(best_model, features)
+            shap_plot_path = generate_shap_plot(best_model, features)
         except Exception as e:
-            shap_plot = None
+            shap_plot_path = None
             print(f"SHAP plot generation failed: {e}")
 
         return render_template("index.html", 
                                probability=probability,
                                risk_level=risk_level,
-                               shap_plot=shap_plot,
+                               shap_plot_path=shap_plot_path,
                                feature_ranges=feature_ranges,
                                feature_columns=feature_columns)
 
@@ -105,9 +105,13 @@ def generate_shap_plot(model, features):
         matplotlib=True,
     )
 
+    # Create a directory to store the SHAP plots
+    output_dir = os.path.join(os.getcwd(), 'shap_plots')
+    os.makedirs(output_dir, exist_ok=True)
+
     # Save the plot as an image to be shown on the webpage
-    shap_plot_path = "static/shap_plot.png"
-    plt.savefig(shap_plot_path)  # Save to static folder
+    shap_plot_path = os.path.join(output_dir, 'shap_plot.png')
+    plt.savefig(shap_plot_path)  # Save to shap_plots directory
     plt.clf()  # Clear the current figure
 
     return shap_plot_path
@@ -117,6 +121,14 @@ def generate_shap_plot(model, features):
 def replace_feature_labels(features):
     renamed_features = features.rename(columns=feature_label_mapping)
     return renamed_features
+
+
+# Route to serve SHAP plot image
+@app.route('/shap_plot')
+def serve_shap_plot():
+    # Serve the SHAP plot from the generated path
+    shap_plot_path = os.path.join(os.getcwd(), 'shap_plots', 'shap_plot.png')
+    return send_file(shap_plot_path, mimetype="image/png")
 
 
 if __name__ == "__main__":

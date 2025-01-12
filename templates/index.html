@@ -26,9 +26,9 @@
         <p>Predicted Probability: {{ probability }}</p>
         <p>Risk Level: {{ risk_level }}</p>
 
-        {% if shap_plot %}
+        {% if shap_plot_path %}
             <h3>SHAP Plot:</h3>
-            <img src="{{ shap_plot }}" alt="SHAP Plot">
+            <img src="{{ url_for('serve_shap_plot') }}" alt="SHAP Plot">
         {% endif %}
     {% endif %}
 </body>
